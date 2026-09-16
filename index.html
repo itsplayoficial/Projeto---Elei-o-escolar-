@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#083a75" />
+  <title>Eleição Escolar • Saber+ & It's Play</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-orbs" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand-wrap">
+      <img class="logo logo-saber" src="assets/logo-saber.png" alt="Escola Saber+" />
+      <div class="brand-copy">
+        <span class="eyebrow">EXPERIÊNCIA DE CIDADANIA</span>
+        <h1>Eleição Escolar</h1>
+        <p>Uma votação simples, segura e divertida para o 1º ao 5º ano</p>
+      </div>
+      <img class="logo logo-itsplay" src="assets/logo-itsplay.png" alt="It's Play Soluções Educacionais" />
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="tabs" aria-label="Navegação principal">
+      <button class="tab active" data-view="urna"><span>🗳️</span> Urna</button>
+      <button class="tab" data-view="admin"><span>👩‍🏫</span> Professoras</button>
+      <button class="tab" data-view="resultados"><span>📊</span> Apuração</button>
+    </nav>
+
+    <section id="view-urna" class="view active">
+      <div id="stationSetup" class="panel welcome-panel">
+        <div class="welcome-copy">
+          <span class="badge">ANTES DE COMEÇAR</span>
+          <h2>Prepare a urna da turma</h2>
+          <p>Escolha o turno e a turma. Depois coloque o dispositivo em frente às crianças para iniciar a votação.</p>
+        </div>
+        <div class="station-card">
+          <label>Turno
+            <select id="voteShift">
+              <option value="manha">☀️ Manhã</option>
+              <option value="tarde">🌤️ Tarde</option>
+            </select>
+          </label>
+          <label>Turma
+            <select id="voteClass"></select>
+          </label>
+          <button id="loadBallot" class="btn primary xl">Iniciar votação</button>
+        </div>
+      </div>
+
+      <div id="ballotArea" class="ballot-shell hidden" aria-live="polite">
+        <div class="ballot-topline">
+          <div>
+            <span class="status-dot"></span>
+            <strong id="ballotContext">Urna ativa</strong>
+          </div>
+          <button id="closeBallot" class="btn ghost compact">Encerrar turma</button>
+        </div>
+
+        <div class="urna-device">
+          <section class="urna-screen" aria-label="Tela da urna">
+            <div id="screenIdle" class="screen-state active">
+              <div class="screen-icon">🗳️</div>
+              <p class="screen-kicker">SUA VEZ!</p>
+              <h2>Digite o número<br>do seu candidato</h2>
+              <p class="screen-help">Use o teclado ao lado.</p>
+              <div class="number-slots" aria-label="Número digitado">
+                <span id="digit1">_</span><span id="digit2">_</span><span id="digit3" class="optional-digit">_</span>
+              </div>
+            </div>
+
+            <div id="screenCandidate" class="screen-state">
+              <p class="screen-kicker">CONFIRA SEU VOTO</p>
+              <div class="candidate-preview">
+                <img id="previewPhoto" alt="Foto do candidato" />
+                <div>
+                  <div class="preview-number" id="previewNumber"></div>
+                  <h2 id="previewName"></h2>
+                  <p id="previewShift"></p>
+                </div>
+              </div>
+              <p class="screen-help">Está correto? Aperte <strong>CONFIRMA</strong>.</p>
+            </div>
+
+            <div id="screenInvalid" class="screen-state">
+              <div class="screen-icon">🤔</div>
+              <p class="screen-kicker">OPS!</p>
+              <h2>Número não encontrado</h2>
+              <p class="screen-help">Aperte <strong>CORRIGE</strong> e tente novamente.</p>
+            </div>
+
+            <div id="screenSuccess" class="screen-state success-state">
+              <div class="success-check">✓</div>
+              <p class="screen-kicker">VOTO REGISTRADO</p>
+              <h2>FIM</h2>
+              <p>Obrigado por participar!</p>
+            </div>
+          </section>
+
+          <aside class="urna-controls" aria-label="Teclado da urna">
+            <div class="keypad-label">TECLADO</div>
+            <div class="keypad" id="keypad">
+              <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+              <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+              <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+              <span></span><button data-key="0">0</button><span></span>
+            </div>
+            <div class="action-keys">
+              <button id="clearVote" class="key correct">CORRIGE</button>
+              <button id="confirmVote" class="key confirm" disabled>CONFIRMA</button>
+            </div>
+            <p class="device-note">Somente a escolha, a turma e o turno são contabilizados.</p>
+          </aside>
+        </div>
+
+        <div class="candidate-reference">
+          <span>Conheça os candidatos deste turno:</span>
+          <div id="candidateMiniList" class="mini-candidates"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-admin" class="view">
+      <div id="adminLocked" class="panel lock-panel">
+        <div class="lock-illustration">🔐</div>
+        <span class="badge">ÁREA RESTRITA</span>
+        <h2>Espaço das professoras</h2>
+        <p>Cadastre os candidatos e configure a votação com o PIN administrativo.</p>
+        <div class="inline-form narrow">
+          <input id="adminPin" type="password" inputmode="numeric" maxlength="6" placeholder="Digite o PIN" />
+          <button id="unlockAdmin" class="btn primary">Entrar</button>
+        </div>
+        <p id="pinHint" class="hint"></p>
+      </div>
+
+      <div id="adminArea" class="hidden">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <span class="badge">CADASTRO</span>
+              <h2>Candidatos</h2>
+              <p>Cadastre até 3 candidatos para cada turma e turno. Os candidatos só aparecem na turma em que foram cadastrados.</p>
+            </div>
+            <button id="lockAdmin" class="btn ghost">🔒 Bloquear</button>
+          </div>
+
+          <form id="candidateForm" class="candidate-form">
+            <label>Turno
+              <select id="candidateShift" required>
+                <option value="manha">Manhã</option>
+                <option value="tarde">Tarde</option>
+              </select>
+            </label>
+            <label>Turma
+              <select id="candidateClass" required></select>
+            </label>
+            <label>Nome ou apelido
+              <input id="candidateName" maxlength="40" required placeholder="Ex.: Ana" />
+            </label>
+            <label>Número
+              <input id="candidateNumber" type="number" min="1" max="999" required placeholder="Ex.: 10" />
+            </label>
+            <label class="file-label">Foto
+              <input id="candidatePhoto" type="file" accept="image/*" capture="environment" required />
+            </label>
+            <button class="btn primary" type="submit">+ Cadastrar candidato</button>
+          </form>
+          <p class="privacy-note">💡 Use preferencialmente o primeiro nome ou apelido. As fotos ficam somente neste dispositivo.</p>
+          <div id="adminCandidates" class="admin-candidates"></div>
+        </div>
+
+        <div class="panel two-col">
+          <div>
+            <span class="badge soft">SEGURANÇA</span>
+            <h3>Alterar PIN</h3>
+            <div class="stack-form">
+              <input id="newPin" type="password" inputmode="numeric" maxlength="6" placeholder="Novo PIN (4 a 6 dígitos)" />
+              <button id="changePin" class="btn secondary">Salvar novo PIN</button>
+            </div>
+          </div>
+          <div>
+            <span class="badge danger">CUIDADO</span>
+            <h3>Limpar eleição</h3>
+            <p>Apaga todos os candidatos e votos deste dispositivo.</p>
+            <button id="resetElection" class="btn danger">Apagar todos os dados</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-resultados" class="view">
+      <div id="resultsLocked" class="panel lock-panel">
+        <div class="lock-illustration">📊</div>
+        <span class="badge">RESULTADO PROTEGIDO</span>
+        <h2>Apuração da eleição</h2>
+        <p>Digite o PIN administrativo para visualizar a contagem.</p>
+        <div class="inline-form narrow">
+          <input id="resultsPin" type="password" inputmode="numeric" maxlength="6" placeholder="Digite o PIN" />
+          <button id="unlockResults" class="btn primary">Ver resultados</button>
+        </div>
+      </div>
+
+      <div id="resultsArea" class="hidden">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <span class="badge">APURAÇÃO</span>
+              <h2>Resultados</h2>
+              <p>Veja a contagem geral ou filtre por turno e turma.</p>
+            </div>
+            <div class="actions">
+              <button id="exportCsv" class="btn secondary">⬇️ Baixar CSV</button>
+              <button id="sendEmail" class="btn primary">✉️ Enviar por e-mail</button>
+            </div>
+          </div>
+
+          <div class="summary-cards">
+            <div class="summary-card"><span>Total de votos</span><strong id="totalVotes">0</strong></div>
+            <div class="summary-card"><span>☀️ Manhã</span><strong id="morningVotes">0</strong></div>
+            <div class="summary-card"><span>🌤️ Tarde</span><strong id="afternoonVotes">0</strong></div>
+          </div>
+
+          <div class="filter-row">
+            <label>Turno
+              <select id="resultShift"><option value="todos">Todos</option><option value="manha">Manhã</option><option value="tarde">Tarde</option></select>
+            </label>
+            <label>Turma
+              <select id="resultClass"><option value="todos">Todas</option></select>
+            </label>
+          </div>
+
+          <div id="resultsList" class="results-list"></div>
+          <div id="classBreakdown" class="class-breakdown"></div>
+          <p id="emailStatus" class="hint"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><img src="assets/logo-saber.png" alt="" /><span>×</span><img src="assets/logo-itsplay.png" alt="" /></div>
+    <p>Experiência educativa de votação • Escola Saber+ & It's Play</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
