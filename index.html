@@ -161,12 +161,25 @@
             <label>Número
               <input id="candidateNumber" type="number" min="1" max="999" required placeholder="Ex.: 10" />
             </label>
-            <label class="file-label">Foto
-              <input id="candidatePhoto" type="file" accept="image/*" capture="environment" required />
-            </label>
-            <button class="btn primary" type="submit">+ Cadastrar candidato</button>
+            <div class="file-picker-field">
+              <span class="field-title">Foto da criança</span>
+              <input id="candidatePhoto" class="native-file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" required />
+              <label for="candidatePhoto" class="file-picker-button" role="button" tabindex="0">
+                <span class="file-picker-icon">🖼️</span>
+                <span><strong>Escolher foto</strong><small>Galeria ou arquivos do celular</small></span>
+              </label>
+              <div id="photoSelection" class="photo-selection hidden" aria-live="polite">
+                <img id="photoPreview" alt="Prévia da foto selecionada" />
+                <div class="photo-selection-copy">
+                  <strong id="photoFileName">Foto selecionada</strong>
+                  <small id="photoFileInfo"></small>
+                  <button id="clearCandidatePhoto" type="button" class="text-button">Remover / escolher outra</button>
+                </div>
+              </div>
+            </div>
+            <button id="saveCandidateButton" class="btn primary" type="submit">+ Cadastrar candidato</button>
           </form>
-          <p class="privacy-note">💡 Use preferencialmente o primeiro nome ou apelido. As fotos ficam somente neste dispositivo.</p>
+          <p class="privacy-note">💡 No celular, toque em <strong>Escolher foto</strong> para abrir a galeria ou o gerenciador de arquivos. A imagem é otimizada antes de ser salva para ocupar menos espaço no dispositivo.</p>
           <div id="adminCandidates" class="admin-candidates"></div>
         </div>
 

@@ -1,21 +1,15 @@
-# Eleição Escolar — Saber+ & It's Play
+# Sistema de Votação Escolar — Saber+ & It's Play
 
-Aplicativo responsivo para simulação de votação escolar do 1º ao 5º ano.
+Versão responsiva com seleção de fotos otimizada para celular.
 
-## Recursos
-- 3 candidatos no turno da manhã e 3 no turno da tarde.
-- Cadastro de foto, nome/apelido e número.
-- Seleção por turma (1º ao 5º ano) e turno.
-- Interface de urna com teclado numérico, CORRIGE e CONFIRMA.
-- Tela de confirmação visual do candidato e tela FIM após o voto.
-- Área de professoras e resultados protegida por PIN.
-- Apuração por turno, turma e total.
-- Exportação CSV e envio de resumo para itsplayoficial@gmail.com.
-- Layout responsivo para celular, tablet, notebook e desktop.
+## Cadastro de fotos no celular
 
-## Primeiro acesso
-PIN inicial: `1234`
-Altere o PIN após o primeiro acesso.
+Na área **Professoras > Candidatos**, toque em **Escolher foto**. O sistema abre o seletor nativo do aparelho para escolher uma imagem da **galeria** ou do **gerenciador de arquivos**. A versão anterior usava `capture="environment"`, atributo que em muitos celulares priorizava/forçava a câmera; ele foi removido.
 
-## Uso
-Abra `index.html` no navegador. Para uso em múltiplos dispositivos com contagem centralizada, é necessário conectar o front-end a um banco de dados/backend.
+Antes de salvar, o app mostra uma prévia da foto e permite removê-la ou escolher outra. A imagem é reduzida e compactada no próprio navegador para economizar armazenamento local e melhorar o funcionamento em celulares.
+
+Formatos esperados: JPG/JPEG, PNG, WEBP e, quando o navegador do aparelho oferecer suporte, HEIC/HEIF. Arquivos de até 20 MB podem ser selecionados; a cópia gravada no app é otimizada.
+
+## Observação sobre armazenamento
+
+Esta versão continua funcionando sem servidor: candidatos, votos e imagens ficam armazenados no navegador do dispositivo. Para uso simultâneo em vários celulares/tablets com uma base única compartilhada, é necessário conectar o app a um banco de dados online.

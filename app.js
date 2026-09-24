@@ -42,7 +42,7 @@ function setupEvents(){
  document.querySelectorAll('[data-key]').forEach(b=>b.addEventListener('click',()=>enterDigit(b.dataset.key)));
  $('clearVote').addEventListener('click',resetBallotScreen);$('confirmVote').addEventListener('click',commitVote);
  $('unlockAdmin').addEventListener('click',unlockAdmin);$('lockAdmin').addEventListener('click',()=>{$('adminArea').classList.add('hidden');$('adminLocked').classList.remove('hidden');adminUnlocked=false});
- $('candidateForm').addEventListener('submit',addCandidate);$('changePin').addEventListener('click',changePin);$('resetElection').addEventListener('click',resetElection);
+ $('candidateForm').addEventListener('submit',addCandidate);$('candidatePhoto').addEventListener('change',handlePhotoSelection);$('clearCandidatePhoto').addEventListener('click',clearPhotoSelection);$('changePin').addEventListener('click',changePin);$('resetElection').addEventListener('click',resetElection);
  $('unlockResults').addEventListener('click',unlockResults);$('resultShift').addEventListener('change',renderResults);$('resultClass').addEventListener('change',renderResults);$('exportCsv').addEventListener('click',exportCSV);$('sendEmail').addEventListener('click',sendEmailReport);
  document.addEventListener('keydown',e=>{if(!$('ballotArea').classList.contains('hidden')){if(/^\d$/.test(e.key))enterDigit(e.key);if(e.key==='Backspace'||e.key==='Escape')resetBallotScreen();if(e.key==='Enter'&&!$('confirmVote').disabled)commitVote()}})
 }
@@ -52,6 +52,23 @@ function unlockAdmin(){const pin=$('adminPin').value.trim();if(!isPinValid(pin))
 function unlockResults(){const pin=$('resultsPin').value.trim();if(!isPinValid(pin))return alert('PIN incorreto.');resultsUnlocked=true;$('resultsLocked').classList.add('hidden');$('resultsArea').classList.remove('hidden');$('resultsPin').value='';renderResults()}
 function changePin(){const pin=$('newPin').value.trim();if(!/^\d{4,6}$/.test(pin))return alert('Use um PIN com 4 a 6 números.');state.pin=encodePin(pin);saveState();$('newPin').value='';alert('PIN alterado com sucesso.')}
 function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
+function formatFileSize(bytes){if(bytes<1024)return `${bytes} B`;if(bytes<1024*1024)return `${(bytes/1024).toFixed(0)} KB`;return `${(bytes/1024/1024).toFixed(1)} MB`}
+function clearPhotoSelection(){const input=$('candidatePhoto');input.value='';$('photoPreview').removeAttribute('src');$('photoFileName').textContent='Foto selecionada';$('photoFileInfo').textContent='';$('photoSelection').classList.add('hidden')}
+function handlePhotoSelection(){const file=$('candidatePhoto').files&&$('candidatePhoto').files[0];if(!file){clearPhotoSelection();return}if(!file.type.startsWith('image/')&&!/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name)){clearPhotoSelection();return alert('Selecione um arquivo de imagem.')}if(file.size>20*1024*1024){clearPhotoSelection();return alert('A foto é muito grande. Escolha uma imagem de até 20 MB.')}const url=URL.createObjectURL(file);$('photoPreview').src=url;$('photoPreview').onload=()=>URL.revokeObjectURL(url);$('photoFileName').textContent=file.name||'Foto selecionada';$('photoFileInfo').textContent=`${formatFileSize(file.size)} • será otimizada ao cadastrar`;$('photoSelection').classList.remove('hidden')}
+function loadImageFromFile(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Não foi possível abrir esta imagem.'))};img.src=url})}
+async function optimizePhoto(file){
+  const img=await loadImageFromFile(file);
+  const maxSide=560;
+  const scale=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+  const w=Math.max(1,Math.round((img.naturalWidth||img.width)*scale)),h=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
+  let quality=.82,data=canvas.toDataURL('image/jpeg',quality);
+  const targetChars=130000;
+  while(data.length>targetChars&&quality>.48){quality-=.08;data=canvas.toDataURL('image/jpeg',quality)}
+  return data;
+}
+function safeSaveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true}catch(err){console.error(err);alert('O armazenamento deste navegador está cheio. As fotos já são compactadas, mas pode ser necessário excluir candidatos antigos ou usar outro dispositivo.');return false}}
 async function addCandidate(e){
   e.preventDefault();
   const shift=$('candidateShift').value,className=$('candidateClass').value,name=$('candidateName').value.trim(),number=String(Number($('candidateNumber').value)),file=$('candidatePhoto').files[0];
@@ -59,14 +76,19 @@ async function addCandidate(e){
   const list=state.candidates.filter(c=>c.shift===shift&&c.className===className);
   if(list.length>=3)return alert(`Já existem 3 candidatos para ${className} no turno da ${shiftLabel[shift]}.`);
   if(list.some(c=>String(c.number)===number))return alert('Esse número já está sendo usado nesta turma e turno.');
-  if(file.size>4*1024*1024)return alert('Use uma foto com até 4 MB.');
-  const photo=await fileToDataURL(file);
-  state.candidates.push({id:uid(),shift,className,name,number,photo,createdAt:new Date().toISOString()});
-  saveState();
-  const keepShift=shift,keepClass=className;
-  e.target.reset();
-  $('candidateShift').value=keepShift;$('candidateClass').value=keepClass;
-  renderAdminCandidates();
+  if(file.size>20*1024*1024)return alert('Use uma foto com até 20 MB.');
+  const saveButton=$('saveCandidateButton');const originalLabel=saveButton.textContent;saveButton.disabled=true;saveButton.textContent='Otimizando foto...';
+  try{
+    const photo=await optimizePhoto(file);
+    const candidate={id:uid(),shift,className,name,number,photo,createdAt:new Date().toISOString()};
+    state.candidates.push(candidate);
+    if(!safeSaveState()){state.candidates=state.candidates.filter(c=>c.id!==candidate.id);return}
+    const keepShift=shift,keepClass=className;
+    e.target.reset();clearPhotoSelection();
+    $('candidateShift').value=keepShift;$('candidateClass').value=keepClass;
+    renderAdminCandidates();
+  }catch(err){console.error(err);alert('Não foi possível processar essa foto. Tente escolher uma imagem JPG, PNG ou WEBP da galeria/arquivos.')}
+  finally{saveButton.disabled=false;saveButton.textContent=originalLabel}
 }
 function renderAdminCandidates(){
   const box=$('adminCandidates');
